@@ -213,7 +213,7 @@ footer {
   text-align: center;
 }
 
-.welcome-overlay {
+.modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 10;
@@ -224,7 +224,7 @@ footer {
   background: rgba(5, 10, 16, 0.78);
 }
 
-.welcome-modal {
+.modal-box {
   width: min(92vw, 460px);
   padding: 1.75rem 1.5rem;
   background: #101d2b;
@@ -232,7 +232,7 @@ footer {
   text-align: center;
 }
 
-.welcome-modal h2 {
+.modal-box h2 {
   margin: 0 0 1rem;
   font-family: "Monocraft", monospace;
   font-size: 2rem;
@@ -241,14 +241,14 @@ footer {
   color: #ffcf6b;
 }
 
-.welcome-modal p {
+.modal-box p {
   margin: 0 0 1.4rem;
   line-height: 1.5;
   color: #e6edf3;
   font-family: var(--font-roboto), sans-serif;
 }
 
-.welcome-dismiss {
+.modal-dismiss {
   appearance: none;
   font-family: "Monocraft", monospace;
   font-size: 1rem;
@@ -261,9 +261,37 @@ footer {
   -webkit-tap-highlight-color: transparent;
 }
 
-.welcome-dismiss:active {
+.modal-dismiss:active {
   background: #16232f;
   border-color: #ffcf6b;
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -12px;
+  image-rendering: pixelated;
+  animation-name: confetti-fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes confetti-fall {
+  from {
+    transform: translate(0, -10vh) rotate(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--drift, 0px), 110vh) rotate(360deg);
+    opacity: 0.85;
+  }
 }
 
 @media (max-width: 420px) {
@@ -275,7 +303,7 @@ footer {
     padding: 1.1rem;
   }
 
-  .welcome-modal h2 {
+  .modal-box h2 {
     font-size: 1.6rem;
   }
 

@@ -18,11 +18,35 @@ import {
 const FADE_MS = 220;
 const STORAGE_KEY = "lighthouse-game-state";
 const WELCOME_SEEN_KEY = "lighthouse-welcome-seen";
+const CONFETTI_COLORS = ["#ffcf6b", "#5fb8c9", "#e2955d", "#a97c50", "#9fd3ff", "#ffd76b"];
+const CONFETTI_COUNT = 40;
 
 interface SavedState {
   roomName: string;
   visitedKitchen: boolean;
   hasKey: boolean;
+}
+
+interface ConfettiPiece {
+  id: number;
+  left: number;
+  drift: number;
+  size: number;
+  color: string;
+  delay: number;
+  duration: number;
+}
+
+function createConfetti(): ConfettiPiece[] {
+  return Array.from({ length: CONFETTI_COUNT }, (_, id) => ({
+    id,
+    left: Math.random() * 100,
+    drift: (Math.random() - 0.5) * 40,
+    size: 6 + Math.random() * 6,
+    color: CONFETTI_COLORS[id % CONFETTI_COLORS.length],
+    delay: Math.random() * 0.5,
+    duration: 2.2 + Math.random() * 1.6,
+  }));
 }
 
 function KeyIcon({ size = 28 }: { size?: number }) {
@@ -53,6 +77,8 @@ export default function Home() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [keyPosition, setKeyPosition] = useState<{ top: string; left: string } | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showEscape, setShowEscape] = useState(false);
+  const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([]);
   const isFirstSave = useRef(true);
 
   // Reads localStorage, which only exists client-side, so this can't be
@@ -157,6 +183,20 @@ export default function Home() {
     }
   }, [state.room, state.hasKey]);
 
+  // Celebrate every time the Boathouse is reached (state.room only changes
+  // reference on an actual room change, so this fires once per arrival).
+  useEffect(() => {
+    if (state.room.name === "Boathouse") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowEscape(true);
+      setConfettiPieces(createConfetti());
+    }
+  }, [state.room]);
+
+  function dismissEscape() {
+    setShowEscape(false);
+  }
+
   function move(direction: Direction) {
     if (isTransitioning) {
       return;
@@ -212,19 +252,54 @@ export default function Home() {
   return (
     <>
       {showWelcome && (
-        <div className="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
-          <div className="welcome-modal">
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+          <div className="modal-box">
             <h2 id="welcome-title">Welcome</h2>
             <p>
               You&apos;re trapped at the top of a lighthouse, and the way down is locked tight.
               Search each room for a hidden key — it&apos;s the only thing that will unlock the
               way to a secret room, and your only chance to escape.
             </p>
-            <button type="button" className="welcome-dismiss" onClick={dismissWelcome}>
+            <button type="button" className="modal-dismiss" onClick={dismissWelcome}>
               Begin
             </button>
           </div>
         </div>
+      )}
+      {showEscape && (
+        <>
+          <div className="confetti" aria-hidden="true">
+            {confettiPieces.map((piece) => (
+              <span
+                key={piece.id}
+                className="confetti-piece"
+                style={
+                  {
+                    left: `${piece.left}%`,
+                    width: piece.size,
+                    height: piece.size,
+                    backgroundColor: piece.color,
+                    animationDelay: `${piece.delay}s`,
+                    animationDuration: `${piece.duration}s`,
+                    "--drift": `${piece.drift}px`,
+                  } as CSSProperties
+                }
+              />
+            ))}
+          </div>
+          <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="escape-title">
+            <div className="modal-box">
+              <h2 id="escape-title">You Escaped!</h2>
+              <p>
+                You unlocked the Boathouse, climbed aboard, and rowed clear of the lighthouse.
+                The tower shrinks behind you — you made it out.
+              </p>
+              <button type="button" className="modal-dismiss" onClick={dismissEscape}>
+                Nice!
+              </button>
+            </div>
+          </div>
+        </>
       )}
       <div className="pixel-frame" style={{ "--room-color": currentRoom.color } as CSSProperties}>
         <main>
