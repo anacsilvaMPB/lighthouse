@@ -12,6 +12,7 @@ export interface Room {
 export interface GameState {
   room: Room;
   visitedKitchen: boolean;
+  hasKey: boolean;
 }
 
 export interface MoveResult {
@@ -63,6 +64,15 @@ export const rooms: Room[] = [
     color: "#5fb8c9",
     art: "/art/rocks.png",
   },
+  {
+    name: "Boathouse",
+    description:
+      "A sturdy rowboat rests on its cradle, tools hung neat along the wall. The door stands open to the dock and the sea beyond.",
+    col: 0,
+    row: 2,
+    color: "#a97c50",
+    art: "/art/boathouse.png",
+  },
 ];
 
 const blockedReasons: BlockedReason[] = [
@@ -93,12 +103,6 @@ const blockedReasons: BlockedReason[] = [
   {
     col: 0,
     row: 1,
-    direction: "down",
-    message: "Below is only bare rock foundation. No door leads that way.",
-  },
-  {
-    col: 0,
-    row: 1,
     direction: "left",
     message: "Solid stone tower wall. There's no way through.",
   },
@@ -113,6 +117,24 @@ const blockedReasons: BlockedReason[] = [
     row: 1,
     direction: "right",
     message: "Jagged rocks and open sea stop you here.",
+  },
+  {
+    col: 0,
+    row: 2,
+    direction: "down",
+    message: "Only the dock and open water lie beyond.",
+  },
+  {
+    col: 0,
+    row: 2,
+    direction: "left",
+    message: "Stacked crates and coiled rope block the way.",
+  },
+  {
+    col: 0,
+    row: 2,
+    direction: "right",
+    message: "Solid timber wall. There's no way through.",
   },
 ];
 
@@ -141,11 +163,20 @@ function findBlockedMessage(col: number, row: number, direction: Direction): str
   return reason ? reason.message : "You can't go that way.";
 }
 
+export function findRoomByName(name: string): Room | undefined {
+  return rooms.find((room) => room.name === name);
+}
+
 export function createInitialState(): GameState {
   return {
     room: findRoom(1, 1) as Room, // Rocks
     visitedKitchen: false,
+    hasKey: false,
   };
+}
+
+export function pickUpKey(state: GameState): GameState {
+  return { ...state, hasKey: true };
 }
 
 export function attemptMove(state: GameState, direction: Direction): MoveResult {
@@ -163,10 +194,14 @@ export function attemptMove(state: GameState, direction: Direction): MoveResult 
     return { state, message: "The lamp room door is locked." };
   }
 
+  if (nextRoom.name === "Boathouse" && !state.hasKey) {
+    return { state, message: "A trapdoor behind the pantry is bolted shut." };
+  }
+
   const visitedKitchen = state.visitedKitchen || nextRoom.name === "Keeper's Kitchen";
 
   return {
-    state: { room: nextRoom, visitedKitchen },
+    state: { room: nextRoom, visitedKitchen, hasKey: state.hasKey },
     message: "",
   };
 }
