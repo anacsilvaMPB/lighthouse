@@ -70,6 +70,8 @@ main {
 }
 
 .map .cell {
+  appearance: none;
+  margin: 0;
   border: 2px solid var(--badge-gold);
   display: flex;
   align-items: center;
@@ -83,8 +85,21 @@ main {
   letter-spacing: 0.02em;
   line-height: 1.3;
   text-transform: uppercase;
-  opacity: 0.45;
+  opacity: 0.3;
+  cursor: default;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: opacity 0.25s ease, box-shadow 0.25s ease;
+}
+
+.map .cell.reachable {
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.map .cell.reachable:active {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--room-color);
 }
 
 .map .cell.current {
@@ -196,55 +211,6 @@ footer {
   font-size: 0.8rem;
   color: #6b7f93;
   text-align: center;
-}
-
-.controls {
-  display: grid;
-  grid-template-columns: repeat(3, 48px);
-  grid-template-rows: repeat(3, 48px);
-  grid-template-areas:
-    ".    up    ."
-    "left .     right"
-    ".    down  .";
-  gap: 6px;
-  justify-content: center;
-  margin: 1.2rem 0 0;
-}
-
-.control-btn {
-  font-family: "Monocraft", monospace;
-  font-size: 1.2rem;
-  color: var(--badge-text);
-  background: var(--badge-navy);
-  border: 2px solid var(--badge-gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.control-btn:active {
-  background: #16232f;
-  border-color: var(--room-color);
-}
-
-.control-up {
-  grid-area: up;
-}
-
-.control-down {
-  grid-area: down;
-}
-
-.control-left {
-  grid-area: left;
-}
-
-.control-right {
-  grid-area: right;
 }
 
 @media (max-width: 420px) {

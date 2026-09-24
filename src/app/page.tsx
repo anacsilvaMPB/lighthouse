@@ -15,13 +15,6 @@ import {
   type Room,
 } from "@/game/movement";
 
-const keyToDirection: Record<string, Direction> = {
-  ArrowUp: "up",
-  ArrowDown: "down",
-  ArrowLeft: "left",
-  ArrowRight: "right",
-};
-
 const FADE_MS = 220;
 const STORAGE_KEY = "lighthouse-game-state";
 
@@ -163,22 +156,6 @@ export default function Home() {
     }, FADE_MS);
   }
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      const direction = keyToDirection[event.key];
-      if (!direction) {
-        return;
-      }
-      event.preventDefault();
-      move(direction);
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-    // move() isn't memoized; these are exactly the values it closes over.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, isTransitioning, rooms]);
-
   function handlePickUpKey() {
     setState((current) => pickUpKey(current));
   }
@@ -197,20 +174,38 @@ export default function Home() {
 
   const visibleRooms = rooms.filter((room) => room.name !== "Boathouse" || state.hasKey);
 
+  function directionTo(room: Room): Direction | null {
+    const dc = room.col - currentRoom.col;
+    const dr = room.row - currentRoom.row;
+    return (
+      (Object.keys(directionDeltas) as Direction[]).find((direction) => {
+        const delta = directionDeltas[direction];
+        return delta.dc === dc && delta.dr === dr;
+      }) ?? null
+    );
+  }
+
   return (
     <div className="pixel-frame" style={{ "--room-color": currentRoom.color } as CSSProperties}>
       <main>
-        <div className="map">
-          {visibleRooms.map((room) => (
-            <div
-              key={room.name}
-              className={
-                room.col === currentRoom.col && room.row === currentRoom.row ? "cell current" : "cell"
-              }
-            >
-              {room.name}
-            </div>
-          ))}
+        <div className="map" aria-label="Rooms">
+          {visibleRooms.map((room) => {
+            const isCurrent = room.col === currentRoom.col && room.row === currentRoom.row;
+            const direction = isCurrent ? null : directionTo(room);
+
+            return (
+              <button
+                key={room.name}
+                type="button"
+                className={isCurrent ? "cell current" : direction ? "cell reachable" : "cell"}
+                onClick={direction ? () => move(direction) : undefined}
+                disabled={direction === null}
+                aria-current={isCurrent ? "true" : undefined}
+              >
+                {room.name}
+              </button>
+            );
+          })}
         </div>
         <div id="scene" className={isFading ? "fade" : undefined}>
           <div className="illustration">
@@ -241,41 +236,7 @@ export default function Home() {
           </div>
         </div>
         <p id="message">{message}</p>
-        <div className="controls" aria-label="Move">
-          <button
-            type="button"
-            className="control-btn control-up"
-            onClick={() => move("up")}
-            aria-label="Move up"
-          >
-            ▲
-          </button>
-          <button
-            type="button"
-            className="control-btn control-left"
-            onClick={() => move("left")}
-            aria-label="Move left"
-          >
-            ◀
-          </button>
-          <button
-            type="button"
-            className="control-btn control-right"
-            onClick={() => move("right")}
-            aria-label="Move right"
-          >
-            ▶
-          </button>
-          <button
-            type="button"
-            className="control-btn control-down"
-            onClick={() => move("down")}
-            aria-label="Move down"
-          >
-            ▼
-          </button>
-        </div>
-        <footer>Use the arrow keys or the buttons above to move.</footer>
+        <footer>Tap a nearby room on the map to move there.</footer>
       </main>
     </div>
   );
