@@ -96,11 +96,13 @@ h1 {
 #room-description {
   line-height: 1.5;
   margin: 0 0 1.2rem;
+  font-family: var(--font-roboto), sans-serif;
 }
 
 #exits {
   margin: 0 0 1rem;
   color: #9fd3ff;
+  font-family: var(--font-roboto), sans-serif;
 }
 
 #message {
