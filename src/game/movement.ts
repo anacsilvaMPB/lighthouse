@@ -27,7 +27,10 @@ interface BlockedReason {
   message: string;
 }
 
-export const rooms: Room[] = [
+// Used when no room list is supplied (e.g. in tests, or before the
+// database-backed list has loaded). The live app fetches rooms from D1
+// via /api/rooms and threads that list through instead.
+export const defaultRooms: Room[] = [
   {
     name: "Spiral Stair",
     description:
@@ -152,7 +155,7 @@ export const directionLabels: Record<Direction, string> = {
   right: "Right",
 };
 
-export function findRoom(col: number, row: number): Room | undefined {
+export function findRoom(col: number, row: number, rooms: Room[] = defaultRooms): Room | undefined {
   return rooms.find((room) => room.col === col && room.row === row);
 }
 
@@ -163,13 +166,13 @@ function findBlockedMessage(col: number, row: number, direction: Direction): str
   return reason ? reason.message : "You can't go that way.";
 }
 
-export function findRoomByName(name: string): Room | undefined {
+export function findRoomByName(name: string, rooms: Room[] = defaultRooms): Room | undefined {
   return rooms.find((room) => room.name === name);
 }
 
-export function createInitialState(): GameState {
+export function createInitialState(rooms: Room[] = defaultRooms): GameState {
   return {
-    room: findRoom(1, 1) as Room, // Rocks
+    room: findRoom(1, 1, rooms) as Room, // Rocks
     visitedKitchen: false,
     hasKey: false,
   };
@@ -179,9 +182,13 @@ export function pickUpKey(state: GameState): GameState {
   return { ...state, hasKey: true };
 }
 
-export function attemptMove(state: GameState, direction: Direction): MoveResult {
+export function attemptMove(
+  state: GameState,
+  direction: Direction,
+  rooms: Room[] = defaultRooms
+): MoveResult {
   const { dc, dr } = directionDeltas[direction];
-  const nextRoom = findRoom(state.room.col + dc, state.room.row + dr);
+  const nextRoom = findRoom(state.room.col + dc, state.room.row + dr, rooms);
 
   if (!nextRoom) {
     return {

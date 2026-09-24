@@ -4,14 +4,15 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   attemptMove,
   createInitialState,
+  defaultRooms,
   directionDeltas,
   directionLabels,
   findRoom,
   findRoomByName,
   pickUpKey,
-  rooms,
   type Direction,
   type GameState,
+  type Room,
 } from "@/game/movement";
 
 const keyToDirection: Record<string, Direction> = {
@@ -49,6 +50,9 @@ function KeyIcon({ size = 28 }: { size?: number }) {
 }
 
 export default function Home() {
+  // Rendered with defaultRooms first so the server-rendered HTML and the
+  // client's first paint match; /api/rooms (backed by D1) replaces it after mount.
+  const [rooms, setRooms] = useState<Room[]>(defaultRooms);
   const [state, setState] = useState<GameState>(createInitialState);
   const [message, setMessage] = useState("");
   const [isFading, setIsFading] = useState(false);
@@ -56,23 +60,51 @@ export default function Home() {
   const [keyPosition, setKeyPosition] = useState<{ top: string; left: string } | null>(null);
   const isFirstSave = useRef(true);
 
-  // Load any saved progress after mount (client-only; keeps the first render
-  // identical to the server-rendered HTML, avoiding a hydration mismatch).
+  // On mount: load the room list from the database, then apply any saved
+  // progress against that list. Client-only, so the first paint still
+  // matches the server-rendered HTML (no hydration mismatch).
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as SavedState;
-        const room = findRoomByName(saved.roomName);
-        if (room) {
-          // Syncing from localStorage, an external system read only once on mount.
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setState({ room, visitedKitchen: saved.visitedKitchen, hasKey: saved.hasKey });
+    let cancelled = false;
+
+    async function init() {
+      let loadedRooms = defaultRooms;
+      try {
+        const response = await fetch("/api/rooms");
+        if (response.ok) {
+          const data = (await response.json()) as Room[];
+          if (Array.isArray(data) && data.length > 0) {
+            loadedRooms = data;
+          }
         }
+      } catch {
+        // keep defaultRooms
       }
-    } catch {
-      // ignore unreadable/corrupt saved state
+
+      if (cancelled) {
+        return;
+      }
+
+      // Syncing from the database and localStorage, both read once on mount.
+      setRooms(loadedRooms);
+
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw) as SavedState;
+          const room = findRoomByName(saved.roomName, loadedRooms);
+          if (room) {
+            setState({ room, visitedKitchen: saved.visitedKitchen, hasKey: saved.hasKey });
+          }
+        }
+      } catch {
+        // ignore unreadable/corrupt saved state
+      }
     }
+
+    init();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Persist on every change, skipping the very first effect pass so it
@@ -116,7 +148,7 @@ export default function Home() {
       }
       event.preventDefault();
 
-      const result = attemptMove(state, direction);
+      const result = attemptMove(state, direction, rooms);
 
       if (result.message) {
         setMessage(result.message);
@@ -136,7 +168,7 @@ export default function Home() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [state, isTransitioning]);
+  }, [state, isTransitioning, rooms]);
 
   function handlePickUpKey() {
     setState((current) => pickUpKey(current));
@@ -146,7 +178,7 @@ export default function Home() {
 
   const openDirections = (Object.keys(directionDeltas) as Direction[]).filter((direction) => {
     const { dc, dr } = directionDeltas[direction];
-    return findRoom(currentRoom.col + dc, currentRoom.row + dr) !== undefined;
+    return findRoom(currentRoom.col + dc, currentRoom.row + dr, rooms) !== undefined;
   });
 
   const exitsText =
