@@ -4,9 +4,18 @@
 <meta charset="UTF-8">
 <title>Lighthouse</title>
 <style>
+  @font-face {
+    font-family: "Monocraft";
+    src: url("fonts/Monocraft.ttf") format("truetype");
+    font-display: swap;
+  }
+
   :root {
     color-scheme: dark;
     --room-color: #ffcf6b;
+    --badge-gold: #d9a668;
+    --badge-navy: #1f2a3d;
+    --badge-text: #f0cf8f;
   }
 
   body {
@@ -21,7 +30,7 @@
   }
 
   main {
-    width: min(90vw, 520px);
+    width: min(92vw, 680px);
     padding: 2rem;
     border: 1px solid #2a3b4d;
     border-radius: 8px;
@@ -37,29 +46,27 @@
   }
 
   .map .cell {
-    border: 2px solid #24384a;
+    border: 2px solid var(--badge-gold);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
-    background: #0d1a26;
+    text-align: center;
+    padding: 6px 4px;
+    background: var(--badge-navy);
+    color: var(--badge-text);
+    font-family: "Monocraft", monospace;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    text-transform: uppercase;
     opacity: 0.45;
-    transition: border-color 0.25s ease, background 0.25s ease, opacity 0.25s ease;
-  }
-
-  .map .cell img {
-    width: 100%;
-    height: auto;
-    display: block;
-    image-rendering: pixelated;
+    transition: opacity 0.25s ease, box-shadow 0.25s ease;
   }
 
   .map .cell.current {
-    border-color: var(--room-color);
-    background: #16232f;
     opacity: 1;
-    box-shadow: 0 0 0 1px var(--room-color) inset;
+    box-shadow: 0 0 0 2px var(--room-color);
   }
 
   #scene {
@@ -84,6 +91,7 @@
 
   h1 {
     margin: 0 0 1rem;
+    font-family: "Monocraft", monospace;
     font-size: 2.1rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -117,10 +125,10 @@
 <body>
 <main>
   <div class="map" id="map">
-    <div class="cell" data-col="0" data-row="0"><img src="art/badge-spiral-stair.png" alt="Spiral Stair"></div>
-    <div class="cell" data-col="1" data-row="0"><img src="art/badge-lamp-room.png" alt="Lamp Room"></div>
-    <div class="cell" data-col="0" data-row="1"><img src="art/badge-keepers-kitchen.png" alt="Keeper's Kitchen"></div>
-    <div class="cell" data-col="1" data-row="1"><img src="art/badge-rocks.png" alt="Rocks"></div>
+    <div class="cell" data-col="0" data-row="0">Spiral Stair</div>
+    <div class="cell" data-col="1" data-row="0">Lamp Room</div>
+    <div class="cell" data-col="0" data-row="1">Keeper's Kitchen</div>
+    <div class="cell" data-col="1" data-row="1">Rocks</div>
   </div>
   <div id="scene">
     <div class="illustration" id="illustration"></div>
