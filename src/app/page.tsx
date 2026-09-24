@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState, type CSSProperties } from "react";
+
 type Direction = "up" | "down" | "left" | "right";
 
 interface Room {
@@ -24,7 +28,7 @@ const rooms: Room[] = [
     col: 0,
     row: 0,
     color: "#8fa6bd",
-    art: "art/spiral-stair.png",
+    art: "/art/spiral-stair.png",
   },
   {
     name: "Lamp Room",
@@ -33,7 +37,7 @@ const rooms: Room[] = [
     col: 1,
     row: 0,
     color: "#ffcf6b",
-    art: "art/lamp-room.png",
+    art: "/art/lamp-room.png",
   },
   {
     name: "Keeper's Kitchen",
@@ -42,7 +46,7 @@ const rooms: Room[] = [
     col: 0,
     row: 1,
     color: "#e2955d",
-    art: "art/keepers-kitchen.png",
+    art: "/art/keepers-kitchen.png",
   },
   {
     name: "Rocks",
@@ -51,7 +55,7 @@ const rooms: Room[] = [
     col: 1,
     row: 1,
     color: "#5fb8c9",
-    art: "art/rocks.png",
+    art: "/art/rocks.png",
   },
 ];
 
@@ -138,84 +142,88 @@ function findBlockedMessage(col: number, row: number, direction: Direction): str
   return reason ? reason.message : "You can't go that way.";
 }
 
-function buildIllustration(room: Room): string {
-  return `<img src="${room.art}" alt="${room.name} illustration" width="704" height="294">`;
-}
-
-let currentRoom: Room = findRoom(1, 1) as Room; // Rocks
-let isTransitioning = false;
-
+const START_ROOM = findRoom(1, 1) as Room; // Rocks
 const FADE_MS = 220;
 
-const sceneEl = document.getElementById("scene") as HTMLElement;
-const illustrationEl = document.getElementById("illustration") as HTMLElement;
-const roomNameEl = document.getElementById("room-name") as HTMLElement;
-const roomDescriptionEl = document.getElementById("room-description") as HTMLElement;
-const exitsEl = document.getElementById("exits") as HTMLElement;
-const messageEl = document.getElementById("message") as HTMLElement;
-const mapCells = Array.from(document.querySelectorAll<HTMLElement>("#map .cell"));
+export default function Home() {
+  const [currentRoom, setCurrentRoom] = useState<Room>(START_ROOM);
+  const [message, setMessage] = useState("");
+  const [isFading, setIsFading] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-function render(message: string): void {
-  document.documentElement.style.setProperty("--room-color", currentRoom.color);
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const direction = keyToDirection[event.key];
+      if (!direction) {
+        return;
+      }
+      event.preventDefault();
+      move(direction);
+    }
 
-  illustrationEl.innerHTML = buildIllustration(currentRoom);
-  roomNameEl.textContent = currentRoom.name;
-  roomDescriptionEl.textContent = currentRoom.description;
+    function move(direction: Direction) {
+      if (isTransitioning) {
+        return;
+      }
+
+      const { dc, dr } = directionDeltas[direction];
+      const nextRoom = findRoom(currentRoom.col + dc, currentRoom.row + dr);
+
+      if (!nextRoom) {
+        setMessage(findBlockedMessage(currentRoom.col, currentRoom.row, direction));
+        return;
+      }
+
+      setIsTransitioning(true);
+      setIsFading(true);
+
+      window.setTimeout(() => {
+        setCurrentRoom(nextRoom);
+        setMessage("");
+        setIsFading(false);
+        window.setTimeout(() => setIsTransitioning(false), FADE_MS);
+      }, FADE_MS);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentRoom, isTransitioning]);
 
   const openDirections = (Object.keys(directionDeltas) as Direction[]).filter((direction) => {
     const { dc, dr } = directionDeltas[direction];
     return findRoom(currentRoom.col + dc, currentRoom.row + dr) !== undefined;
   });
 
-  exitsEl.textContent =
+  const exitsText =
     openDirections.length > 0
       ? "You can go: " + openDirections.map((direction) => directionLabels[direction]).join(", ")
       : "There is nowhere to go from here.";
 
-  mapCells.forEach((cell) => {
-    const col = Number(cell.dataset.col);
-    const row = Number(cell.dataset.row);
-    cell.classList.toggle("current", col === currentRoom.col && row === currentRoom.row);
-  });
-
-  messageEl.textContent = message;
+  return (
+    <main style={{ "--room-color": currentRoom.color } as CSSProperties}>
+      <div className="map">
+        {rooms.map((room) => (
+          <div
+            key={room.name}
+            className={
+              room.col === currentRoom.col && room.row === currentRoom.row ? "cell current" : "cell"
+            }
+          >
+            {room.name}
+          </div>
+        ))}
+      </div>
+      <div id="scene" className={isFading ? "fade" : undefined}>
+        <div className="illustration">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={currentRoom.art} alt={`${currentRoom.name} illustration`} width={704} height={294} />
+        </div>
+        <h1>{currentRoom.name}</h1>
+        <p id="room-description">{currentRoom.description}</p>
+        <p id="exits">{exitsText}</p>
+      </div>
+      <p id="message">{message}</p>
+      <footer>Use the arrow keys to move.</footer>
+    </main>
+  );
 }
-
-function move(direction: Direction): void {
-  if (isTransitioning) {
-    return;
-  }
-
-  const { dc, dr } = directionDeltas[direction];
-  const nextCol = currentRoom.col + dc;
-  const nextRow = currentRoom.row + dr;
-  const nextRoom = findRoom(nextCol, nextRow);
-
-  if (!nextRoom) {
-    render(findBlockedMessage(currentRoom.col, currentRoom.row, direction));
-    return;
-  }
-
-  isTransitioning = true;
-  sceneEl.classList.add("fade");
-
-  window.setTimeout(() => {
-    currentRoom = nextRoom;
-    render("");
-    sceneEl.classList.remove("fade");
-    window.setTimeout(() => {
-      isTransitioning = false;
-    }, FADE_MS);
-  }, FADE_MS);
-}
-
-window.addEventListener("keydown", (event: KeyboardEvent) => {
-  const direction = keyToDirection[event.key];
-  if (!direction) {
-    return;
-  }
-  event.preventDefault();
-  move(direction);
-});
-
-render("");
