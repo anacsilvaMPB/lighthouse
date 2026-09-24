@@ -159,6 +159,10 @@ export function attemptMove(state: GameState, direction: Direction): MoveResult 
     };
   }
 
+  if (nextRoom.name === "Lamp Room" && !state.visitedKitchen) {
+    return { state, message: "The lamp room door is locked." };
+  }
+
   const visitedKitchen = state.visitedKitchen || nextRoom.name === "Keeper's Kitchen";
 
   return {
