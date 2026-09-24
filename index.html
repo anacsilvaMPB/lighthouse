@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lighthouse</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --room-color: #ffcf6b;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0b1622;
+    color: #e6edf3;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  main {
+    width: min(90vw, 520px);
+    padding: 2rem;
+    border: 1px solid #2a3b4d;
+    border-radius: 8px;
+    background: #101d2b;
+    transition: border-color 0.25s ease;
+  }
+
+  .map {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin: 0 0 1.5rem;
+  }
+
+  .map .cell {
+    border: 2px solid #24384a;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    background: #0d1a26;
+    opacity: 0.45;
+    transition: border-color 0.25s ease, background 0.25s ease, opacity 0.25s ease;
+  }
+
+  .map .cell img {
+    width: 100%;
+    height: auto;
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  .map .cell.current {
+    border-color: var(--room-color);
+    background: #16232f;
+    opacity: 1;
+    box-shadow: 0 0 0 1px var(--room-color) inset;
+  }
+
+  #scene {
+    transition: opacity 0.22s ease;
+    opacity: 1;
+  }
+
+  #scene.fade {
+    opacity: 0;
+  }
+
+  .illustration img {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 0 1.2rem;
+    border-radius: 6px;
+    border: 3px solid var(--room-color);
+    image-rendering: pixelated;
+    transition: border-color 0.25s ease;
+  }
+
+  h1 {
+    margin: 0 0 1rem;
+    font-size: 1.4rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--room-color);
+    transition: color 0.25s ease;
+  }
+
+  #room-description {
+    line-height: 1.5;
+    margin: 0 0 1.2rem;
+  }
+
+  #exits {
+    margin: 0 0 1rem;
+    color: #9fd3ff;
+  }
+
+  #message {
+    min-height: 1.5em;
+    color: #ff9b8a;
+    font-style: italic;
+  }
+
+  footer {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: #6b7f93;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="map" id="map">
+    <div class="cell" data-col="0" data-row="0"><img src="art/badge-spiral-stair.png" alt="Spiral Stair"></div>
+    <div class="cell" data-col="1" data-row="0"><img src="art/badge-lamp-room.png" alt="Lamp Room"></div>
+    <div class="cell" data-col="0" data-row="1"><img src="art/badge-keepers-kitchen.png" alt="Keeper's Kitchen"></div>
+    <div class="cell" data-col="1" data-row="1"><img src="art/badge-rocks.png" alt="Rocks"></div>
+  </div>
+  <div id="scene">
+    <div class="illustration" id="illustration"></div>
+    <h1 id="room-name"></h1>
+    <p id="room-description"></p>
+    <p id="exits"></p>
+  </div>
+  <p id="message"></p>
+  <footer>Use the arrow keys to move.</footer>
+</main>
+<script src="game.js"></script>
+</body>
+</html>
