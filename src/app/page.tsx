@@ -140,34 +140,43 @@ export default function Home() {
     }
   }, [state.room, state.hasKey]);
 
+  function move(direction: Direction) {
+    if (isTransitioning) {
+      return;
+    }
+
+    const result = attemptMove(state, direction, rooms);
+
+    if (result.message) {
+      setMessage(result.message);
+      return;
+    }
+
+    setIsTransitioning(true);
+    setIsFading(true);
+
+    window.setTimeout(() => {
+      setState(result.state);
+      setMessage("");
+      setIsFading(false);
+      window.setTimeout(() => setIsTransitioning(false), FADE_MS);
+    }, FADE_MS);
+  }
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const direction = keyToDirection[event.key];
-      if (!direction || isTransitioning) {
+      if (!direction) {
         return;
       }
       event.preventDefault();
-
-      const result = attemptMove(state, direction, rooms);
-
-      if (result.message) {
-        setMessage(result.message);
-        return;
-      }
-
-      setIsTransitioning(true);
-      setIsFading(true);
-
-      window.setTimeout(() => {
-        setState(result.state);
-        setMessage("");
-        setIsFading(false);
-        window.setTimeout(() => setIsTransitioning(false), FADE_MS);
-      }, FADE_MS);
+      move(direction);
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // move() isn't memoized; these are exactly the values it closes over.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, isTransitioning, rooms]);
 
   function handlePickUpKey() {
@@ -232,7 +241,41 @@ export default function Home() {
           </div>
         </div>
         <p id="message">{message}</p>
-        <footer>Use the arrow keys to move.</footer>
+        <div className="controls" aria-label="Move">
+          <button
+            type="button"
+            className="control-btn control-up"
+            onClick={() => move("up")}
+            aria-label="Move up"
+          >
+            ▲
+          </button>
+          <button
+            type="button"
+            className="control-btn control-left"
+            onClick={() => move("left")}
+            aria-label="Move left"
+          >
+            ◀
+          </button>
+          <button
+            type="button"
+            className="control-btn control-right"
+            onClick={() => move("right")}
+            aria-label="Move right"
+          >
+            ▶
+          </button>
+          <button
+            type="button"
+            className="control-btn control-down"
+            onClick={() => move("down")}
+            aria-label="Move down"
+          >
+            ▼
+          </button>
+        </div>
+        <footer>Use the arrow keys or the buttons above to move.</footer>
       </main>
     </div>
   );

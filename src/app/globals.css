@@ -17,12 +17,18 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1rem 0;
   background:
     repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 3px),
     radial-gradient(circle at 50% 15%, #16263c, #0b1622 70%);
@@ -115,10 +121,11 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 14px;
   border: none;
   background: none;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .inventory {
@@ -188,4 +195,68 @@ footer {
   margin-top: 1.5rem;
   font-size: 0.8rem;
   color: #6b7f93;
+  text-align: center;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, 48px);
+  grid-template-rows: repeat(3, 48px);
+  grid-template-areas:
+    ".    up    ."
+    "left .     right"
+    ".    down  .";
+  gap: 6px;
+  justify-content: center;
+  margin: 1.2rem 0 0;
+}
+
+.control-btn {
+  font-family: "Monocraft", monospace;
+  font-size: 1.2rem;
+  color: var(--badge-text);
+  background: var(--badge-navy);
+  border: 2px solid var(--badge-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.control-btn:active {
+  background: #16232f;
+  border-color: var(--room-color);
+}
+
+.control-up {
+  grid-area: up;
+}
+
+.control-down {
+  grid-area: down;
+}
+
+.control-left {
+  grid-area: left;
+}
+
+.control-right {
+  grid-area: right;
+}
+
+@media (max-width: 420px) {
+  .pixel-frame {
+    width: 96vw;
+  }
+
+  main {
+    padding: 1.1rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
 }
