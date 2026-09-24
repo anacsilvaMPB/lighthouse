@@ -17,6 +17,7 @@ import {
 
 const FADE_MS = 220;
 const STORAGE_KEY = "lighthouse-game-state";
+const WELCOME_SEEN_KEY = "lighthouse-welcome-seen";
 
 interface SavedState {
   roomName: string;
@@ -51,7 +52,30 @@ export default function Home() {
   const [isFading, setIsFading] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [keyPosition, setKeyPosition] = useState<{ top: string; left: string } | null>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const isFirstSave = useRef(true);
+
+  // Reads localStorage, which only exists client-side, so this can't be
+  // decided during the initial (possibly server) render.
+  useEffect(() => {
+    try {
+      if (!window.localStorage.getItem(WELCOME_SEEN_KEY)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setShowWelcome(true);
+      }
+    } catch {
+      setShowWelcome(true);
+    }
+  }, []);
+
+  function dismissWelcome() {
+    setShowWelcome(false);
+    try {
+      window.localStorage.setItem(WELCOME_SEEN_KEY, "1");
+    } catch {
+      // ignore (e.g. private browsing with storage disabled)
+    }
+  }
 
   // On mount: load the room list from the database, then apply any saved
   // progress against that list. Client-only, so the first paint still
@@ -186,58 +210,75 @@ export default function Home() {
   }
 
   return (
-    <div className="pixel-frame" style={{ "--room-color": currentRoom.color } as CSSProperties}>
-      <main>
-        <div className="map" aria-label="Rooms">
-          {visibleRooms.map((room) => {
-            const isCurrent = room.col === currentRoom.col && room.row === currentRoom.row;
-            const direction = isCurrent ? null : directionTo(room);
+    <>
+      {showWelcome && (
+        <div className="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+          <div className="welcome-modal">
+            <h2 id="welcome-title">Welcome</h2>
+            <p>
+              You&apos;re trapped at the top of a lighthouse, and the way down is locked tight.
+              Search each room for a hidden key — it&apos;s the only thing that will unlock the
+              way to a secret room, and your only chance to escape.
+            </p>
+            <button type="button" className="welcome-dismiss" onClick={dismissWelcome}>
+              Begin
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="pixel-frame" style={{ "--room-color": currentRoom.color } as CSSProperties}>
+        <main>
+          <div className="map" aria-label="Rooms">
+            {visibleRooms.map((room) => {
+              const isCurrent = room.col === currentRoom.col && room.row === currentRoom.row;
+              const direction = isCurrent ? null : directionTo(room);
 
-            return (
-              <button
-                key={room.name}
-                type="button"
-                className={isCurrent ? "cell current" : direction ? "cell reachable" : "cell"}
-                onClick={direction ? () => move(direction) : undefined}
-                disabled={direction === null}
-                aria-current={isCurrent ? "true" : undefined}
-              >
-                {room.name}
-              </button>
-            );
-          })}
-        </div>
-        <div id="scene" className={isFading ? "fade" : undefined}>
-          <div className="illustration">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={currentRoom.art} alt={`${currentRoom.name} illustration`} width={704} height={294} />
-            {keyPosition && (
-              <button
-                type="button"
-                className="key-pickup"
-                style={{ top: keyPosition.top, left: keyPosition.left }}
-                onClick={handlePickUpKey}
-                aria-label="Pick up the key"
-              >
-                <KeyIcon />
-              </button>
-            )}
+              return (
+                <button
+                  key={room.name}
+                  type="button"
+                  className={isCurrent ? "cell current" : direction ? "cell reachable" : "cell"}
+                  onClick={direction ? () => move(direction) : undefined}
+                  disabled={direction === null}
+                  aria-current={isCurrent ? "true" : undefined}
+                >
+                  {room.name}
+                </button>
+              );
+            })}
           </div>
-          <h1>{currentRoom.name}</h1>
-          <div className="textbox">
-            <p id="room-description">{currentRoom.description}</p>
-            <p id="exits">{exitsText}</p>
+          <div id="scene" className={isFading ? "fade" : undefined}>
+            <div className="illustration">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={currentRoom.art} alt={`${currentRoom.name} illustration`} width={704} height={294} />
+              {keyPosition && (
+                <button
+                  type="button"
+                  className="key-pickup"
+                  style={{ top: keyPosition.top, left: keyPosition.left }}
+                  onClick={handlePickUpKey}
+                  aria-label="Pick up the key"
+                >
+                  <KeyIcon />
+                </button>
+              )}
+            </div>
+            <h1>{currentRoom.name}</h1>
+            <div className="textbox">
+              <p id="room-description">{currentRoom.description}</p>
+              <p id="exits">{exitsText}</p>
+            </div>
           </div>
-        </div>
-        <div className="inventory" aria-label="Inventory">
-          <span className="inventory-label">Inventory</span>
-          <div className={state.hasKey ? "inventory-slot filled" : "inventory-slot"}>
-            {state.hasKey && <KeyIcon size={20} />}
+          <div className="inventory" aria-label="Inventory">
+            <span className="inventory-label">Inventory</span>
+            <div className={state.hasKey ? "inventory-slot filled" : "inventory-slot"}>
+              {state.hasKey && <KeyIcon size={20} />}
+            </div>
           </div>
-        </div>
-        <p id="message">{message}</p>
-        <footer>Tap a nearby room on the map to move there.</footer>
-      </main>
-    </div>
+          <p id="message">{message}</p>
+          <footer>Tap a nearby room on the map to move there.</footer>
+        </main>
+      </div>
+    </>
   );
 }

@@ -213,6 +213,59 @@ footer {
   text-align: center;
 }
 
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(5, 10, 16, 0.78);
+}
+
+.welcome-modal {
+  width: min(92vw, 460px);
+  padding: 1.75rem 1.5rem;
+  background: #101d2b;
+  border: 3px solid var(--badge-gold);
+  text-align: center;
+}
+
+.welcome-modal h2 {
+  margin: 0 0 1rem;
+  font-family: "Monocraft", monospace;
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffcf6b;
+}
+
+.welcome-modal p {
+  margin: 0 0 1.4rem;
+  line-height: 1.5;
+  color: #e6edf3;
+  font-family: var(--font-roboto), sans-serif;
+}
+
+.welcome-dismiss {
+  appearance: none;
+  font-family: "Monocraft", monospace;
+  font-size: 1rem;
+  padding: 0.6rem 1.6rem;
+  color: var(--badge-text);
+  background: var(--badge-navy);
+  border: 2px solid var(--badge-gold);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.welcome-dismiss:active {
+  background: #16232f;
+  border-color: #ffcf6b;
+}
+
 @media (max-width: 420px) {
   .pixel-frame {
     width: 96vw;
@@ -220,6 +273,10 @@ footer {
 
   main {
     padding: 1.1rem;
+  }
+
+  .welcome-modal h2 {
+    font-size: 1.6rem;
   }
 
   h1 {
